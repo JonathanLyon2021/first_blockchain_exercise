@@ -1,7 +1,7 @@
 import hashlib
-import json 
+import json
 from time import time
-from flask import FLask, jsonify, request
+from flask import Flask, jsonify, request
 from uuid import uuid4
 
 
@@ -93,16 +93,84 @@ class Blockchain(object):
         """
         return Blockchain.hash(block) [:4] == "0000"
 
+    # Instance our Node 
+app = Flask(__name__) 
+
+    # Generate a globally unique address for this node
+node_identifier = str(uuid4()).replace('-','')
+
+    #Instance the Blockchain 
+blockchain = Blockchain()
+
+# @app.route('/mine', methods = ["GET"])
+# def mine():
+#     return "We will mine a new block" 
+
+# @app.route('/transactions/new', methods = {"POST"}) 
+# def new_transaction():
+#     return "We will add a new transaction" 
+
+@app.route('/chain', methods= ["GET"]) 
+def full_chain():
+    response = {
+        'chain': blockchain.chain,
+        'length': len(blockchain.chain)
+    } 
+    return jsonify(response), 200
+
+#Implement the mine() function 
+@app.route('/mine', methods = ["GET"]) 
+def mine(): 
+    #Add our mining reward.
+    #Sender "0" means new coins.
+    blockchain.new_transaction(
+        sender = "0",
+        recipient = node_identifier,
+        amount = 1
+    )
+
+    #Make the new block and mine it
+    block = blockchain.new_block(0)
+    blockchain.proof_of_work(block)
+
+    response = {
+        "message" : "New block mined",
+        "index" : block["index"], 
+        "transactions" : block["transactions"],
+        "proof" : block["proof"],
+        "previous_hash" : block["previous_hash"]
+    }
+
+    return jsonify(response), 200
+
+#New transaction endpoint
+@app.route('/transactions/new', methods = ["POST"]) 
+def new_transaction(): 
+    values = request.get_json() 
+
+    if not values: 
+        return "Missing body", 400 
+    
+    required = ["sender", "recipient", "amount"]
+
+    if not all(k in values for k in required):
+        return "Missing values", 400 
+
+    index = blockchain.new_transaction(values["sender"], values["recipient"], values["amount"])
+
+    response = { "message": f"Transaction will be added to block {index}"}
+    return jsonify(response), 201
+
+
                             
 
 if __name__ == "__main__":
        blockchain = Blockchain()
+     
        blockchain.proof_of_work(blockchain.last_block)
        print(blockchain.hash(blockchain.last_block))
-       """
-        print(blockchain.hash(blockchain.last_block))
-
-        blockchain.new_transaction("Jonathan", "Daniel", 36)
-        blockchain.new_block(0)
-        print(blockchain.hash(blockchain.last_block))
-        """
+       print(blockchain.hash(blockchain.last_block))    
+       blockchain.new_transaction("Jonathan", "Daniel", 36)
+       blockchain.new_block(0)
+       print(blockchain.hash(blockchain.last_block))
+       app.run(host='0.0.0.0', port=5000)
