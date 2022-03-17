@@ -247,16 +247,35 @@ def register_nodes():
         }
         return jsonify(response), 201 
 
+@app.route('/nodes/resolve', methods = ['GET'])
+def consensus():
+    replaced = blockchain.resolve_conflict() 
 
+    if replaced:
+        response = { 
+            'message': 'Our chain was replaced',
+            'new_chain': blockchain.chain 
+            }
+    else:
+        response = {
+            'message': 'Our chain is authoritative', 
+            'chain': blockchain.chain
+        }
+    return jsonify(response), 200
                             
 
 if __name__ == "__main__":
-       blockchain = Blockchain()
-     
-       blockchain.proof_of_work(blockchain.last_block)
-       print(blockchain.hash(blockchain.last_block))
-       print(blockchain.hash(blockchain.last_block))    
-       blockchain.new_transaction("Jonathan", "Daniel", 36)
-       blockchain.new_block(0)
-       print(blockchain.hash(blockchain.last_block))
-       app.run(host='0.0.0.0', port=5000)
+    blockchain = Blockchain()
+    #    blockchain.proof_of_work(blockchain.last_block)
+    #    print(blockchain.hash(blockchain.last_block))
+    #    print(blockchain.hash(blockchain.last_block))    
+    #    blockchain.new_transaction("Jonathan", "Daniel", 36)
+    #    blockchain.new_block(0)
+    #    print(blockchain.hash(blockchain.last_block))
+    #    app.run(host='0.0.0.0', port=5000)
+    from argparse import ArgumentParser 
+
+    parser = ArgumentParser()
+    parser.add_argument('-p', '--port', default=5000, type=int, help ='port to listen on')
+    args = parser.parse_args()
+    app.run(host='0.0.0.0', port=args.port)
