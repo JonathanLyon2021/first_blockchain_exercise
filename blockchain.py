@@ -164,7 +164,7 @@ class Blockchain(object):
     # Instance our Node 
 app = Flask(__name__) 
 
-    # Generate a globally unique address for this node
+    # Generate a globally unique wallet address for this node
 node_identifier = str(uuid4()).replace('-','')
 
     #Instance the Blockchain 
